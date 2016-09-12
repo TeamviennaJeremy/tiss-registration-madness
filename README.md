@@ -16,8 +16,3 @@ TISS Registration script
 4. Enable Script
 5. Have fun.
 
-
-## TODO
-
-* Check if the correct course is selected
-* Test Exam and Group registration
