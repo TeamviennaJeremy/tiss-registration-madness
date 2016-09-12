@@ -59,8 +59,8 @@
 
     var tabs = {
         lva: 'LVA-Anmeldung',
-        group: 'Gruppe',
-        exam: 'Prüfung'
+        group: 'Gruppen',
+        exam: 'Prüfungen'
     };
 
     var LOG_AREA_SYLE = 'color: black; background-color: #FFFCD9; font-size: 10pt;';
