@@ -198,55 +198,73 @@
 
 ///////////////////////// Props
 
+    var _lvaNumber;
     this.getLvaNumber = function() {
-       return $('#contentInner h1 span:first').text().trim();
+       return _lvaNumber || (_lvaNumber = $('#contentInner h1 span:first').text().trim());
     };
 
+    var _lvaName;
     this.getLvaName = function() {
-        return $('#contentInner h1').justtext();
+        return _lvaName || (_lvaName = $('#contentInner h1').justtext());
     };
 
+    var _selectedTab;
     this.getSelectedTab = function() {
-        return $('li.ui-tabs-selected').text().trim();
+        return _selectedTab || (_selectedTab = $('li.ui-tabs-selected').text().trim());
     };
 
+    var _sectionLabel;
     this.getSectionLabel = function() {
-        return $(".groupWrapper .header_element span").filter(function () {
-            return $(this).text().trim() === options.registerSection;
-        });
+        if (!_sectionLabel) {
+            _sectionLabel = $(".groupWrapper .header_element span").filter(function () {
+                return $(this).text().trim() === options.registerSection;
+            });
+        }
+        return _sectionLabel;
     };
 
+    var _section;
+    this.getSection = function() {
+        return _section || (_section = me.getSectionLabel().closest('.groupWrapper'));
+    };
+
+    var _confirmButton;
     // returns null if button is not found
     this.getConfirmButton = function() {
-        var button = $("form#confirmForm input:submit[value='Ok']");
+        var button = _confirmButton || (_confirmButton = $("form#confirmForm input:submit[value='Ok']"));
         return button.length === 0 ? null : button;
     };
 
+    var _registerButton;
     // returns null if button is not found
     this.getRegisterButton = function(section) {
-        var button = $(section).find('input:submit[value="Anmelden"]');
+        if (!_registerButton) {
+            _registerButton = $(section).find('input:submit[value="Anmelden"]');
 
-        // fallback solutions, since it seems the value is not always the same
-        if (button.length === 0) {
-            button = $(section).find('input:submit[value="Voranmelden"]');
+            // fallback solutions, since it seems the value is not always the same
+            if (_registerButton.length === 0) {
+                _registerButton = $(section).find('input:submit[value="Voranmelden"]');
+            }
+
+            if (_registerButton.length === 0) {
+                _registerButton = $(section).find('input:submit[value="Voranmeldung"]');
+            }
         }
 
-        if (button.length === 0) {
-            button = $(section).find('input:submit[value="Voranmeldung"]');
-        }
-
-        return button.length === 0 ? null : button;
+        return _registerButton.length === 0 ? null : _registerButton;
     };
 
+    var _studySelection;
     // returns null if button is not found
     this.getStudySelection = function() {
-        var selection = $("#regForm").find('select[name="regForm:studyCode"]');
+        var selection = _studySelection || (_studySelection = $("#regForm").find('select[name="regForm:studyCode"]'));
         return selection.length === 0 ? null : selection;
     };
 
+    var _deregisterButton;
     // returns null if button is not found
     this.getDeregisterButton = function(section) {
-        var button = $(section).find('input:submit[value="Abmelden"]');
+        var button = _deregisterButton || (_deregisterButton || $(section).find('input:submit[value="Abmelden"]'));
         return button.length === 0 ? null : button;
     };
 
