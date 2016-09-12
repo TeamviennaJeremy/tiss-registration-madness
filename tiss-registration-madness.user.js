@@ -35,12 +35,17 @@
         semester: '2016W',
 
         // if you got multiple study codes, configure the desired one without the dot (e.g. 033526)
-        studyCode: ''
+        studyCode: '',
+
+        enableLog: true
     };
 
     var state = {
         NONE: 0,
         SUCCESS: 1,
+        REGISTER: 2,
+        STUDY_SELECTION: 3,
+        CONFIRM: 4,
 
         // errors
         WRONG_COURSE: 10,
@@ -71,132 +76,121 @@
         me.injectArea(LOG_AREA_ID, LOG_AREA_SYLE, 'Information Log');
         me.injectArea(ERROR_AREA_ID, ERROR_AREA_STYLE);
         me.injectArea(SUCCESS_AREA_ID, SUCCESS_AREA_STYLE);
+        if (options.registrationType == 'lva') {
+            options.registerSection = 'LVA-Anmeldung';
+        }
         me.start();
     };
 
     this.start = function() {
-        me.pageLog('TISS Registration Madness started');
-        me.pageLog('LVA Number: ' + me.getLvaNumber());
-        me.pageLog('LVA Name: ' + me.getLvaName());
-        me.pageLog('SelectedTab: ' + me.getSelectedTab());
+        this.pageLog('TISS Registration Madness started');
+        this.pageLog('LVA Number: ' + this.getLvaNumber());
+        this.pageLog('LVA Name: ' + this.getLvaName());
+        this.pageLog('SelectedTab: ' + this.getSelectedTab());
 
-        var properTabSelected = me.properTabSelected();
-        var studySelection = me.getStudySelection();
-        var confirmButton = me.getConfirmButton();
-        var alreadyRegistered = me.checkIfRegistered();
+        var properTabSelected = this.properTabSelected();
+        var studySelection = this.getStudySelection();
+        var confirmButton = this.getConfirmButton();
+        var alreadyRegistered = this.checkIfRegistered();
 
-        //TODO: check LVA number
-
-        if(me.properSemesterSelected() && !alreadyRegistered) {
+        if(this.properSemesterSelected() && !alreadyRegistered) {
             // check registration step
             if (properTabSelected) {
-                me.register();
+                this.register();
             } else if (studySelection) {
-                me.studySelection(studySelection);
+                this.studySelection(studySelection);
             } else if (confirmButton) {
-                me.confirm(confirmButton);
+                this.confirm();
             } else {
-                me.pageError('Could not determine registration step.');
+                this.pageError('Could not determine registration step.');
             }
         }
 
-        switch(me.state) {
+        switch(this.state) {
             case state.SUCCESS:
-                me.pageSuccess('You are successfully logged in.');
+                this.pageSuccess('You are successfully logged in.');
                 break;
             case state.WRONG_COURSE:
-                me.pageError('Wrong course selected. Expected: ' + options.courseNumber);
+                this.pageError('Wrong course selected. Expected: ' + options.courseNumber);
                 break;
             case state.WRONG_SEMESTER:
-                me.pageError('Wrong semester selected. Expected: ' + options.semester);
+                this.pageError('Wrong semester selected. Expected: ' + options.semester);
                 break;
             case state.WRONG_TAB:
-                me.pageError('Wrong Tab selected. Tab did not match ' + tabs[options.registrationType]);
+                this.pageError('Wrong Tab selected. Tab did not match ' + tabs[options.registrationType]);
                 break;
             case state.SECTION_NOTFOUND:
-                me.pageError('Could not find section with title "' + options.registerSection + '"');
+                this.pageError('Could not find section with title "' + options.registerSection + '"');
                 break;
             case state.BUTTON_NOTFOUND:
-                me.pageError('Could not find register button.');
+                this.pageError('Could not find register button.');
                 break;
         }
     };
 
     this.register = function() {
-        if(!me.properCourseSelected()) {
+        this.state = state.REGISTER;
+        if(!this.properCourseSelected()) {
             return;
         }
 
-        if (options.registrationType == 'lva') {
-            options.registerSection = 'LVA-Anmeldung';
-        }
-
-        var sectionLabel = this.getSectionLabel();
-        var section = sectionLabel.closest('.groupWrapper');
+        var section = this.getSection();
         if (!section) {
-            me.state = state.SECTION_NOTFOUND;
+            this.state = state.SECTION_NOTFOUND;
             return;
         }
 
-        me.highlightElement(sectionLabel);
+        this.highlightElement(this.getSectionLabel());
 
-        var registerButton = me.getRegisterButton(section);
+        var registerButton = this.getRegisterButton(section);
         if (!registerButton) {
-            me.state = state.BUTTON_NOTFOUND;
+            this.state = state.BUTTON_NOTFOUND;
             if (options.autoReload) {
                 setTimeout(function() { location.reload(); }, options.refreshInterval);
             }
             return;
         }
-        me.highlightElement(registerButton);
+        this.highlightElement(registerButton);
 
         if (options.autoRegistration) {
             registerButton.click();
         }
     };
 
-    this.studySelection = function(selection) {
-        me.pageError('');
-       if (options.studyCode) {
-            me.setSelectedValue(selection, options.studyCode);
-       }
-       var registerButton = me.getRegisterButton($('form#regForm'));
-       me.highlightElement(registerButton);
-       if (options.autoRegistration) {
+    this.studySelection = function() {
+        this.state = state.STUDY_SELECTION;
+        var selection = this.getStudySelection();
+        this.pageError('');
+        if (options.studyCode) {
+            this.setSelectedValue(selection, options.studyCode);
+        }
+        var registerButton = this.getRegisterButton($('form#regForm'));
+        this.highlightElement(registerButton);
+        if (options.autoRegistration) {
             registerButton.click();
-       }
+        }
     };
 
-    this.confirm = function(button) {
-        me.pageError('');
-        me.highlightElement(button);
+    this.confirm = function() {
+        this.state = state.CONFIRM;
+        var button = this.getConfirmButton();
+        this.highlightElement(button);
         if (options.autoRegistration) {
             button.click();
         }
     };
 
     this.checkIfRegistered = function() {
-        if (options.registrationType == 'lva') {
-            options.registerSection = 'LVA-Anmeldung';
-        }
-
-        var sectionLabel = this.getSectionLabel();
-        var section = sectionLabel.closest('.groupWrapper');
-        if (!section) {
+        var section = this.getSection();
+        if(!section || !this.getDeregisterButton(section)) {
             return false;
         }
-
-        me.highlightElement(sectionLabel);
-
-        var deregisterButton = me.getDeregisterButton(section);
-        if (!deregisterButton) {
-            return false;
-        }
-        me.state = state.SUCCESS;
+        this.highlightElement(this.getSectionLabel());
+        this.state = state.SUCCESS;
         return true;
     };
 
-///////////////////////// Props
+    ///////////////////////// Props
 
     var _lvaNumber;
     this.getLvaNumber = function() {
@@ -225,7 +219,7 @@
 
     var _section;
     this.getSection = function() {
-        return _section || (_section = me.getSectionLabel().closest('.groupWrapper'));
+        return _section || (_section = this.getSectionLabel().closest('.groupWrapper'));
     };
 
     var _confirmButton;
@@ -268,10 +262,12 @@
         return button.length === 0 ? null : button;
     };
 
-//////////////////////// Util
+    //////////////////////// Util
 
     this.highlightElement = function(element) {
-        element.css('background-color', 'lightgreen');
+        if (options.enableLog) {
+            element.css('background-color', 'lightgreen');
+        }
     };
 
     this.setSelectedValue = function (element, value) {
@@ -280,26 +276,34 @@
     };
 
     this.pageError = function(msg) {
-        var errorLog = $('#' + ERROR_AREA_ID);
-        errorLog.html(msg);
+        if (options.enableLog) {
+            var errorLog = $('#' + ERROR_AREA_ID);
+            errorLog.html(msg);
+        }
     };
 
     this.pageSuccess = function(msg) {
-        var successLog = $('#' + SUCCESS_AREA_ID);
-        successLog.html(msg);
+        if (options.enableLog) {
+            var successLog = $('#' + SUCCESS_AREA_ID);
+            successLog.html(msg);
+        }
     };
 
     this.pageLog = function(msg) {
-        var log = $('#' + LOG_AREA_ID);
-        log.html(log.html() + '<br />' + msg);
+        if (options.enableLog) {
+            var log = $('#' + LOG_AREA_ID);
+            log.html(log.html() + '<br />' + msg);
+        }
     };
 
     this.injectArea = function(id, style, title) {
-        $('#contentInner').before(
-            '<div id="' + id + '" style="' + style + '">' +
-                (title ? '<h2>' + title + '</h2>' : '') +
-            '</div>'
-        );
+        if (options.enableLog) {
+            $('#contentInner').before(
+                '<div id="' + id + '" style="' + style + '">' +
+                    (title ? '<h2>' + title + '</h2>' : '') +
+                '</div>'
+            );
+        }
     };
 
     this.extendJQuery = function() {
@@ -317,9 +321,9 @@
     //////////////////////// Validation
 
     this.properCourseSelected = function() {
-        var lvaNumber = me.getLvaNumber().replace(/[^\d]/, '');
+        var lvaNumber = this.getLvaNumber().replace(/[^\d]/, '');
         if (lvaNumber !== options.courseNumber.replace(/[^\d]/, '')) {
-            me.state = state.WRONG_COURSE;
+            this.state = state.WRONG_COURSE;
             return false;
         }
         return true;
@@ -328,15 +332,15 @@
     this.properSemesterSelected = function() {
         var subheader = $('#contentInner #subHeader').text().trim();
         if (subheader.indexOf(options.semester) === -1) {
-            me.state = state.WRONG_SEMESTER;
+            this.state = state.WRONG_SEMESTER;
             return false;
         }
         return true;
     };
 
     this.properTabSelected = function() {
-        if (me.getSelectedTab() !== tabs[options.registrationType]) {
-            me.state = state.WRONG_TAB;
+        if (this.getSelectedTab() !== tabs[options.registrationType]) {
+            this.state = state.WRONG_TAB;
             return false;
         }
         return true;
