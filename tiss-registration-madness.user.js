@@ -21,6 +21,9 @@
         // interval to refresh the page if register button not available
         refreshInterval: 1000,
 
+        // course number
+        courseNumber: '188.916',
+
         // type of registration, available options: lva, group, exam
         registrationType: 'lva',
 
@@ -33,6 +36,20 @@
 
         // if you got multiple study codes, configure the desired one without the dot (e.g. 033526)
         studyCode: ''
+    };
+
+    var state = {
+        NONE: 0,
+        SUCCESS: 1,
+
+        // errors
+        WRONG_COURSE: 10,
+        WRONG_SEMESTER: 11,
+        WRONG_TAB: 12,
+
+        // not found
+        SECTION_NOTFOUND: 20,
+        BUTTON_NOTFOUND: 21
     };
 
     var tabs = {
@@ -49,6 +66,7 @@
     var SUCCESS_AREA_ID = 'trmSuccess';
 
     this.init = function() {
+        me.state = state.NONE;
         me.extendJQuery();
         me.injectArea(LOG_AREA_ID, LOG_AREA_SYLE, 'Information Log');
         me.injectArea(ERROR_AREA_ID, ERROR_AREA_STYLE);
@@ -69,23 +87,46 @@
 
         //TODO: check LVA number
 
-        if(!me.properSemesterSelected() || alreadyRegistered) {
-            return;
+        if(me.properSemesterSelected() && !alreadyRegistered) {
+            // check registration step
+            if (properTabSelected) {
+                me.register();
+            } else if (studySelection) {
+                me.studySelection(studySelection);
+            } else if (confirmButton) {
+                me.confirm(confirmButton);
+            } else {
+                me.pageError('Could not determine registration step.');
+            }
         }
 
-        // check registration step
-        if (properTabSelected) {
-            me.register();
-        } else if (studySelection) {
-            me.studySelection(studySelection);
-        } else if (confirmButton) {
-            me.confirm(confirmButton);
-        } else {
-            me.pageError('Could not determine registration step.');
+        switch(me.state) {
+            case state.SUCCESS:
+                me.pageSuccess('You are successfully logged in.');
+                break;
+            case state.WRONG_COURSE:
+                me.pageError('Wrong course selected. Expected: ' + options.courseNumber);
+                break;
+            case state.WRONG_SEMESTER:
+                me.pageError('Wrong semester selected. Expected: ' + options.semester);
+                break;
+            case state.WRONG_TAB:
+                me.pageError('Wrong Tab selected. Tab did not match ' + tabs[options.registrationType]);
+                break;
+            case state.SECTION_NOTFOUND:
+                me.pageError('Could not find section with title "' + options.registerSection + '"');
+                break;
+            case state.BUTTON_NOTFOUND:
+                me.pageError('Could not find register button.');
+                break;
         }
     };
 
     this.register = function() {
+        if(!me.properCourseSelected()) {
+            return;
+        }
+
         if (options.registrationType == 'lva') {
             options.registerSection = 'LVA-Anmeldung';
         }
@@ -93,7 +134,7 @@
         var sectionLabel = this.getSectionLabel();
         var section = sectionLabel.closest('.groupWrapper');
         if (!section) {
-            pageError('Could not find section with title "' + options.registerSection + '"');
+            me.state = state.SECTION_NOTFOUND;
             return;
         }
 
@@ -101,7 +142,7 @@
 
         var registerButton = me.getRegisterButton(section);
         if (!registerButton) {
-            pageError('Could not find register button.');
+            me.state = state.BUTTON_NOTFOUND;
             if (options.autoReload) {
                 setTimeout(function() { location.reload(); }, options.refreshInterval);
             }
@@ -151,7 +192,7 @@
         if (!deregisterButton) {
             return false;
         }
-        me.pageSuccess('You are successfully logged in.');
+        me.state = state.SUCCESS;
         return true;
     };
 
@@ -257,10 +298,19 @@
 
     //////////////////////// Validation
 
+    this.properCourseSelected = function() {
+        var lvaNumber = me.getLvaNumber().replace(/[^\d]/, '');
+        if (lvaNumber !== options.courseNumber.replace(/[^\d]/, '')) {
+            me.state = state.WRONG_COURSE;
+            return false;
+        }
+        return true;
+    };
+
     this.properSemesterSelected = function() {
         var subheader = $('#contentInner #subHeader').text().trim();
         if (subheader.indexOf(options.semester) === -1) {
-            me.pageError('Wrong semester selected: expected: ' + options.semester + ', got: ' + subheader.substring(0, 5));
+            me.state = state.WRONG_SEMESTER;
             return false;
         }
         return true;
@@ -268,7 +318,7 @@
 
     this.properTabSelected = function() {
         if (me.getSelectedTab() !== tabs[options.registrationType]) {
-            pageError('Wrong Tab selected. Tab did not match ' + tabs[options.registrationType]);
+            me.state = state.WRONG_TAB;
             return false;
         }
         return true;
