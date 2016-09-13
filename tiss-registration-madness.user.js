@@ -213,6 +213,7 @@
             _sectionLabel = $(".groupWrapper .header_element span").filter(function () {
                 return $(this).text().trim() === options.registerSection;
             });
+            _sectionLabel = _sectionLabel.length > 1 ? _sectionLabel.first() : _sectionLabel;
         }
         return _sectionLabel;
     };
