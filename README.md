@@ -1,5 +1,5 @@
 # tiss-registration-madness
-TISS Registration script
+TISS Registration Script
 
 ![log enabled course registration](https://cloud.githubusercontent.com/assets/9406772/18526966/02e7dee8-7ac3-11e6-84d2-6bbef4c394c6.gif)
 
@@ -10,9 +10,9 @@ TISS Registration script
 
 ## Getting started
 
-1. Download the UserScript and install it to Tampermonkey/Greasemonkey.
+1. Download the script and install it to Tampermonkey/Greasemonkey
 2. Configure the script
-3. Visit your specific registration page.
-4. Enable Script
-5. Have fun.
+3. Visit your specific registration page
+4. Enable the script
+5. Pray :pray:
 
