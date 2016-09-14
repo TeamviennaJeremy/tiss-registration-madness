@@ -37,6 +37,7 @@
         // if you got multiple study codes, configure the desired one without the dot (e.g. 033526)
         studyCode: '',
 
+        // option to enable/disable logs on page
         enableLog: true
     };
 
@@ -208,7 +209,7 @@
 
     var _lvaName;
     this.getLvaName = function() {
-        return _lvaName || (_lvaName = $('#contentInner h1').justtext());
+        return _lvaName || (_lvaName = $('#contentInner h1').textNodes().text().trim());
     };
 
     var _selectedTab;
@@ -325,14 +326,12 @@
     };
 
     this.extendJQuery = function() {
-        jQuery.fn.justtext = function() {
-            //todo remove this in future
-            return $(this).clone()
-                .children()
-                .remove()
-                .end()
-                .text()
-                .trim();
+        jQuery.fn.textNodes = function() {
+            return $(this)
+                .contents()
+                .filter(function() {
+                    return this.nodeType === Node.TEXT_NODE;
+                });
         };
     };
 
