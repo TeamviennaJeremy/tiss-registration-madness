@@ -1,7 +1,7 @@
 # tiss-registration-madness
 TISS Registration script
 
-![log enabled course registration](https://cloud.githubusercontent.com/assets/9406772/18470858/0361e748-79af-11e6-8507-39399929fd79.gif)
+![log enabled course registration](https://cloud.githubusercontent.com/assets/9406772/18526966/02e7dee8-7ac3-11e6-84d2-6bbef4c394c6.gif)
 
 ## Requirements
 

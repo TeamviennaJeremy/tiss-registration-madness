@@ -9,7 +9,6 @@
 // ==/UserScript==
 
 (function TissRegistrationMadnessClass() {
-    var me = this;
 
     var options = {
         // option do enable autoregistration
@@ -38,7 +37,12 @@
         studyCode: '',
 
         // option to enable/disable logs on page
-        enableLog: true
+        enableLog: true,
+
+        // option to specify a time to start the script, it will reload the page at the specified time
+        // [year, month, day, hours, minutes, seconds, milliseconds]
+        // leave array empty to disable the specific startTime
+        startTime: [2016, 9 -1, 15, 6, 59]
     };
 
     var state = {
@@ -64,7 +68,7 @@
         exam: 'Prüfungen'
     };
 
-    var LOG_AREA_SYLE = 'color: black; background-color: #FFFCD9; font-size: 10pt;';
+    var LOG_AREA_SYLE = 'color: black; background-color: #FFFCD9; font-size: 10pt; padding-top: 1px;';
     var LOG_AREA_ID = 'trmLog';
     var ERROR_AREA_STYLE = 'color: red; font-weight: bold; font-size: 14pt; padding: 8px 0px;';
     var ERROR_AREA_ID = 'trmError';
@@ -72,15 +76,24 @@
     var SUCCESS_AREA_ID = 'trmSuccess';
 
     this.init = function() {
-        me.state = state.NONE;
-        me.extendJQuery();
-        me.injectArea(LOG_AREA_ID, LOG_AREA_SYLE, 'Information Log');
-        me.injectArea(ERROR_AREA_ID, ERROR_AREA_STYLE);
-        me.injectArea(SUCCESS_AREA_ID, SUCCESS_AREA_STYLE);
-        if (options.registrationType == 'lva') {
-            options.registerSection = 'LVA-Anmeldung';
+        this.state = state.NONE;
+        this.extendJQuery();
+
+        // delay start if specified
+        var timeToStart;
+        if (options.startTime.length > 0 &&
+            (timeToStart = new (Date.bind.apply(Date, [null].concat(options.startTime)))() - new Date()) > 0) {
+            setTimeout(this.reloadPage, timeToStart);
+            this.setCountDown(timeToStart);
+        } else {
+            this.injectArea(LOG_AREA_ID, LOG_AREA_SYLE, 'Information Log');
+            this.injectArea(ERROR_AREA_ID, ERROR_AREA_STYLE);
+            this.injectArea(SUCCESS_AREA_ID, SUCCESS_AREA_STYLE);
+            if (options.registrationType == 'lva') {
+                options.registerSection = 'LVA-Anmeldung';
+            }
+            this.start();
         }
-        me.start();
     };
 
     this.start = function() {
@@ -95,7 +108,6 @@
 
         // identify registration step & process
         if(this.properSemesterSelected() && !this.isRegistered()) {
-            // check registration step
             if (this.properTabSelected()){
                 this.register();
             } else if (foundStudySelection) {
@@ -152,7 +164,7 @@
         if (!registerButton) {
             this.state = state.BUTTON_NOTFOUND;
             if (options.autoReload) {
-                setTimeout(function() { location.reload(); }, options.refreshInterval);
+                setTimeout(this.reloadPage, options.refreshInterval);
             }
             return;
         }
@@ -315,14 +327,30 @@
         }
     };
 
-    this.injectArea = function(id, style, title) {
-        if (options.enableLog) {
+    this.injectArea = function(id, style, title, force) {
+        if (options.enableLog || force) {
             $('#contentInner').before(
                 '<div id="' + id + '" style="' + style + '">' +
                     (title ? '<h2>' + title + '</h2>' : '') +
                 '</div>'
             );
         }
+    };
+
+    this.reloadPage = function() {
+        location.reload();
+    };
+
+    this.setCountDown = function(milliseconds) {
+        this.injectArea('trmCountdown', LOG_AREA_SYLE, '', true);
+        var ms = milliseconds;
+        var logCountdown = function() {
+            $('#trmCountdown').html('Script will start in ' + Math.round(ms/1000) + ' seconds.');
+        };
+        setInterval(function() {
+            ms -= 1000;
+            logCountdown();
+        }, 1000);
     };
 
     this.extendJQuery = function() {
