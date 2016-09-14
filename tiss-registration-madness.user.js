@@ -45,7 +45,7 @@
         SUCCESS: 1,
         REGISTER: 2,
         STUDY_SELECTION: 3,
-        CONFIRM: 4,
+        ACKNOWLEDGE: 5,
 
         // errors
         WRONG_COURSE: 10,
@@ -88,27 +88,29 @@
         this.pageLog('LVA Name: ' + this.getLvaName());
         this.pageLog('SelectedTab: ' + this.getSelectedTab());
 
-        var properTabSelected = this.properTabSelected();
-        var studySelection = this.getStudySelection();
-        var confirmButton = this.getConfirmButton();
-        var alreadyRegistered = this.checkIfRegistered();
+        var foundStudySelection = !!this.getStudySelection();
+        var foundConfirmButton = !!this.getConfirmButton();
+        var foundAcknowledgeButton = !!this.getAcknowledgeButton();
 
-        if(this.properSemesterSelected() && !alreadyRegistered) {
+        // odemtofu regostratopm step & process
+        if(this.properSemesterSelected() && !this.isRegistered()) {
             // check registration step
-            if (properTabSelected) {
+            if (this.properTabSelected()){
                 this.register();
-            } else if (studySelection) {
-                this.studySelection(studySelection);
-            } else if (confirmButton) {
+            } else if (foundStudySelection) {
+                this.studySelection();
+            } else if (foundConfirmButton) {
                 this.confirm();
+            } else if (foundAcknowledgeButton) {
+                this.acknowledge();
             } else {
-                this.pageError('Could not determine registration step.');
+                this.state = state.NONE;
             }
         }
 
         switch(this.state) {
             case state.SUCCESS:
-                this.pageSuccess('You are successfully logged in.');
+                this.pageSuccess('You are successfully registered.');
                 break;
             case state.WRONG_COURSE:
                 this.pageError('Wrong course selected. Expected: ' + options.courseNumber);
@@ -124,6 +126,9 @@
                 break;
             case state.BUTTON_NOTFOUND:
                 this.pageError('Could not find register button.');
+                break;
+            case state.NONE:
+                this.pageError('Could not determine registration step.');
                 break;
         }
     };
@@ -164,23 +169,27 @@
         if (options.studyCode) {
             this.setSelectedValue(selection, options.studyCode);
         }
-        var registerButton = this.getRegisterButton($('form#regForm'));
-        this.highlightElement(registerButton);
-        if (options.autoRegistration) {
-            registerButton.click();
-        }
+        this.confirm();
     };
 
     this.confirm = function() {
-        this.state = state.CONFIRM;
-        var button = this.getConfirmButton();
+        var confirmButton = this.getConfirmButton();
+        this.highlightElement(confirmButton);
+        if (options.autoRegistration) {
+            confirmButton.click();
+        }
+    };
+
+    this.acknowledge = function() {
+        this.state = state.ACKNOWLEDGE;
+        var button = this.getAcknowledgeButton();
         this.highlightElement(button);
         if (options.autoRegistration) {
             button.click();
         }
     };
 
-    this.checkIfRegistered = function() {
+    this.isRegistered = function() {
         var section = this.getSection();
         if(!section || !this.getDeregisterButton(section)) {
             return false;
@@ -223,10 +232,10 @@
         return _section || (_section = this.getSectionLabel().closest('.groupWrapper'));
     };
 
-    var _confirmButton;
+    var _acknowledgeButton;
     // returns null if button is not found
-    this.getConfirmButton = function() {
-        var button = _confirmButton || (_confirmButton = $("form#confirmForm input:submit[value='Ok']"));
+    this.getAcknowledgeButton = function() {
+        var button = _acknowledgeButton || (_acknowledgeButton = $("form#confirmForm input:submit[value='Ok']"));
         return button.length === 0 ? null : button;
     };
 
@@ -244,9 +253,17 @@
             if (_registerButton.length === 0) {
                 _registerButton = $(section).find('input:submit[value="Voranmeldung"]');
             }
+
+            _registerButton = _registerButton.length === 0 ? null : _registerButton;
         }
 
-        return _registerButton.length === 0 ? null : _registerButton;
+        return _registerButton;
+    };
+
+    var _confirmButton;
+    // returns null if button is not found
+    this.getConfirmButton = function() {
+        return _confirmButton || (_confirmButton = this.getRegisterButton($('form#regForm')));
     };
 
     var _studySelection;
