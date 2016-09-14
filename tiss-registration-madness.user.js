@@ -93,7 +93,7 @@
         var foundConfirmButton = !!this.getConfirmButton();
         var foundAcknowledgeButton = !!this.getAcknowledgeButton();
 
-        // odemtofu regostratopm step & process
+        // identify registration step & process
         if(this.properSemesterSelected() && !this.isRegistered()) {
             // check registration step
             if (this.properTabSelected()){
