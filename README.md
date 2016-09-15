@@ -1,7 +1,7 @@
-# tiss-registration-madness
+# :zap: tiss-registration-madness :zap:
 TISS Registration Script
 
-![log enabled course registration](https://cloud.githubusercontent.com/assets/9406772/18526966/02e7dee8-7ac3-11e6-84d2-6bbef4c394c6.gif)
+![Demo](https://cloud.githubusercontent.com/assets/9406772/18539063/77b3aaf8-7b14-11e6-996b-854570429be6.gif)
 
 ## Requirements
 
